@@ -1,14 +1,8 @@
-from sqlalchemy import Column, String, Float
-from sqlalchemy import create_engine
+from sqlalchemy import Column, DateTime, Integer, String, Float, create_engine
 from sqlalchemy.orm import declarative_base
-from sqlalchemy.orm import Session
-import tfl_client
-
-arrivals = tfl_client.fetch_arrivals(["15"])
 
 engine = create_engine("sqlite:///tfl_data.db")
 Base = declarative_base()
-session = Session(engine)
 
 class Line(Base):
     __tablename__ = "lines"
@@ -22,25 +16,20 @@ class StopPoint(Base):
     lat = Column(Float)
     lon = Column(Float)
 
+class ArrivalObservation(Base):
+    __tablename__ = "arrival_observations"
+    id = Column(Integer, primary_key=True)
+    lineId = Column(String)
+    naptanId = Column(String)
+    timestamp = Column(DateTime)
+    expectedArrival = Column(DateTime)
+    destinationName = Column(String)
+    timeToStation = Column(Integer)
+    vehicleId = Column(String)
+
 Base.metadata.create_all(engine)
 
 
-for arrival in arrivals:
-    existing_stop = session.get(StopPoint, arrival["naptanId"])
-    if existing_stop is None:
-        stop_point = StopPoint(
-            naptanId=arrival["naptanId"],
-            stationName=arrival["stationName"],
-        )
-        session.add(stop_point)
-
-session.commit()
-
-stops = session.query(StopPoint).all()
-print(len(stops))
-
-for stop in stops[:10]:
-    print(stop.naptanId, "-", stop.stationName)
 
 """
 notes:
